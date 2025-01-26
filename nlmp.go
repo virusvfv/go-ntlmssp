@@ -12,6 +12,7 @@ import (
 	"crypto/md5"
 	"golang.org/x/crypto/md4"
 	"strings"
+	"encoding/hex"
 )
 
 func getNtlmV2Hash(password, username, target string) []byte {
@@ -19,10 +20,17 @@ func getNtlmV2Hash(password, username, target string) []byte {
 }
 
 func getNtlmHash(password string) []byte {
-	hash := md4.New()
-	hash.Write(toUnicode(password))
-	return hash.Sum(nil)
+        hash := md4.New()
+        hash.Write(toUnicode(password))
+        //try to decode as ntlm hash
+        //if success - return it as bytes - do pass the hash
+        decoded, err := hex.DecodeString(password)
+        if len(password)==32 && err==nil {
+                return decoded
+        }
+        return hash.Sum(nil)
 }
+
 
 func computeNtlmV2Response(ntlmV2Hash, serverChallenge, clientChallenge,
 	timestamp, targetInfo []byte) []byte {
